@@ -1,148 +1,349 @@
 # SocialPilot
 
-Social media scheduler & campaign management platform.
+SocialPilot is a social media scheduling and campaign management platform
+designed to support multiple user roles and workflows.
 
-```
+This project was rebuilt from scratch as the final SocialPilot implementation
+for the Infosys Springboard internship project.
+
+## Project Structure
+
+```text
 socialpilot/
-├── frontend/        # Next.js 16 (App Router) + TypeScript + Tailwind v4
-├── backend/         # empty — teammate is building this separately
+├── frontend/        # Next.js frontend application
+├── backend/         # Backend workspace
 └── README.md
-```
 
-No `docker-compose.yml` or Dockerfiles yet — those get added once every
-module (frontend + backend) actually exists, not before.
+Technologies Used
+Next.js
+React
+TypeScript
+Tailwind CSS
+Zustand
+Zod
+Next.js App Router
+User Roles
 
-## Design system — yellow / black / gray
+SocialPilot provides role-specific experiences for four primary user roles:
 
-| Role | Hex | Where it's used |
-|---|---|---|
-| Ink (text, dark surfaces) | `#141414` | body text, dark panels, borders on dark bg |
-| Muted | `#6B6B6B` | secondary text, labels |
-| Border | `#D9D9D6` | dividers, input borders |
-| Background | `#F5F5F3` | page background |
-| Surface | `#FFFFFF` | cards |
-| Accent | `#F4C430` | **one element per screen only** — the action that moves the user forward (Register, Sign in, Publish, pricing CTA) |
-| Accent hover | `#D9A80A` | hover/pressed state of the accent |
+Administrator
 
-All of this lives in `frontend/src/app/globals.css` as CSS variables mapped
-through Tailwind's `@theme inline`. Change a hex there and every component
-picks it up — nothing is hardcoded per-component.
+The Administrator workspace includes:
 
-## Folder structure — built to keep scaling
+Dashboard
+User Management
+Team Management
+Platform Analytics
+Notifications
+Platform Settings
+Account Settings
+Profile
+Business Owner
 
-```
+The Business Owner workspace includes:
+
+Dashboard
+Connected Accounts
+Campaigns
+Scheduled Posts
+Published Posts
+Publishing Logs
+Analytics
+Reports
+Notifications
+Profile
+Settings
+Marketing Team
+
+The Marketing Team workspace includes:
+
+Dashboard
+Client Management
+Client Workspaces
+Campaign Management
+Content Scheduling
+Publishing Calendar
+Analytics
+Reports
+Notifications
+Profile
+Settings
+
+Marketing Team members can access individual client workspaces and manage
+content and campaign-related workflows for those clients.
+
+Content Creator
+
+The Content Creator workspace includes:
+
+Dashboard
+Connected Accounts
+My Posts
+Post Creation
+Post Editing
+Draft Management
+Post Queue
+Publishing Logs
+Campaigns
+Calendar
+Notifications
+Profile
+Settings
+Authentication and Role-Based Navigation
+
+The application includes dedicated authentication pages for:
+
+Login
+Registration
+
+After authentication, users are directed to the appropriate workspace
+according to their assigned role.
+
+The frontend separates authentication routes from the main dashboard
+application and provides role-specific navigation and layouts.
+
+Major Features
+Social Account Management
+
+The application provides interfaces for connecting and managing social media
+accounts for the relevant user workflows.
+
+Content Management
+
+Content Creator and Marketing Team workflows include:
+
+Creating posts
+Editing posts
+Draft management
+Post queues
+Publishing logs
+Post status management
+Calendar-based content management
+Campaign Management
+
+The application provides campaign management interfaces for creating and
+managing social media campaigns.
+
+Scheduling and Publishing
+
+SocialPilot includes interfaces for:
+
+Scheduling posts
+Publishing calendars
+Scheduled posts
+Published posts
+Publishing logs
+Publish-now workflows
+Analytics and Reporting
+
+Role-specific dashboards provide analytics and reporting interfaces for
+monitoring platform, campaign, and social media activity.
+
+Notifications
+
+The application includes notification centers and notification settings
+for relevant user workflows.
+
+Profiles and Settings
+
+Users have role-specific profile and settings pages for managing their
+application preferences and account information.
+
+Frontend Architecture
+
+The frontend uses the Next.js App Router and is organized into authentication,
+marketing, and dashboard route groups.
 frontend/src/
 ├── app/
-│   ├── (marketing)/      landing page (hero, pipeline, platforms, pricing,
-│   │                     final CTA — pricing lives IN the page, not its own route)
-│   ├── (auth)/           login, register — no dashboard chrome
+│   ├── (auth)/
+│   │   ├── login/
+│   │   ├── register/
+│   │   └── layout.tsx
+│   │
+│   ├── (marketing)/
+│   │   ├── page.tsx
+│   │   └── layout.tsx
+│   │
 │   └── (dashboard)/
-│       ├── dashboard/    router only — redirects to the signed-in user's
-│       │                 role-specific workspace based on their role
 │       ├── administrator/
 │       ├── business-owner/
-│       ├── marketing-team/
 │       ├── content-creator/
-│       └── (settings, notifications, calendar, campaigns, analytics, ...
-│            shared pages that aren't role-exclusive yet)
+│       ├── marketing-team/
+│       ├── dashboard/
+│       └── layout.tsx
+│
 ├── components/
-│   ├── landing/          Hero, Pipeline, Pricing, Platforms, DeparturesBoard
-│   ├── auth/              RegisterForm, LoginForm, AuthShell, FormFields
-│   ├── dashboard/, layout/, ui/
-├── lib/                  api.ts (the ONLY file that knows the backend URL),
-│                         utils.ts, constants.ts, validation.ts (zod schemas)
-├── hooks/                useAuth, useAdminExists
-├── store/                zustand (auth state)
-└── types/                shared TS types + api.d.ts (generated from backend)
-```
+│   ├── auth/
+│   ├── dashboard/
+│   ├── landing/
+│   └── layout/
+│
+├── hooks/
+├── lib/
+├── store/
+└── types/
 
-**Why the role subfolders exist already, even though they're just
-placeholders:** an Administrator, a Business Owner, a Marketing Team member,
-and a Content Creator all see genuinely different dashboards per the
-project spec. Giving each one its own route folder now means adding real
-pages later is additive — you're filling in a folder that already has a
-home, not restructuring routes while pages depend on them. `/dashboard`
-itself is just a thin router: it reads the logged-in user's role and
-forwards to `/administrator`, `/business-owner`, `/marketing-team`, or
-`/content-creator`.
+This structure keeps role-specific functionality separated while allowing
+shared components and utilities to be reused across the application.
 
-## Registration — one-time Administrator, then role-restricted
+State Management
 
-- `GET /api/v1/users/admin-exists` is called on page load (see
-  `hooks/useAdminExists.ts`). "Administrator" only appears in the role
-  dropdown if this returns `false`. Once it returns `true`, the dropdown
-  offers Marketing Team, Content Creator, Business Owner only.
-- Fields: Name (letters/spaces/hyphens, 2–50 chars), Email (**Gmail only**,
-  `/^[a-zA-Z0-9._%+-]+@gmail\.com$/`), Password (8+ chars, upper, lower,
-  number, symbol — live strength meter), Confirm password, Organisation
-  (optional).
-- Submits to `POST /api/v1/users/register`.
+Client-side application state is managed using Zustand stores.
 
-## Login
+The frontend contains stores covering areas such as:
 
-Email (Gmail-only) + password. Submits to `POST /api/v1/auth/login`,
-redirects based on the role in the response.
+Authentication
+Social accounts
+Campaigns
+Notifications
+Posts
+Profiles
+Platform settings
+Team assignments
+Administrator users
+Landing Page
 
-## Running it
+The application includes a marketing landing page containing:
 
-```bash
+Hero section
+Product overview
+Platform information
+Workflow/pipeline presentation
+Pricing section
+Final call-to-action
+Design System
+
+The application follows a yellow, black, white, and gray visual design
+system.
+
+Role	Hex
+Ink	#141414
+Muted	#6B6B6B
+Border	#D9D9D6
+Background	#F5F5F3
+Surface	#FFFFFF
+Accent	#F4C430
+Accent Hover	#D9A80A
+
+The design system is centralized through the frontend styling system to
+maintain consistency across the application.
+
+API and Backend Integration
+
+The frontend contains a centralized API layer for communication with the
+backend.
+
+Backend-dependent functionality is structured so that API communication and
+client-side state can be maintained separately from the presentation layer.
+
+The backend directory is maintained separately from the frontend so that
+the two layers can be integrated without coupling backend implementation
+details directly into individual UI components.
+
+Environment Setup
+
+Navigate to the frontend directory:
+
 cd frontend
+
+Install dependencies:
+
 npm install
-cp .env.local.example .env.local   # point NEXT_PUBLIC_API_URL at your teammate's backend
-npm run dev                         # http://localhost:3000
-```
 
-## Pages built so far
+If an environment example file is provided, create the local environment
+file:
 
-- [x] Landing page — hero (3D signal-ring scene), departures board, pipeline,
-      platforms, pricing, final CTA
-- [x] Register, Login
-- [ ] Role-specific dashboards (administrator / business-owner /
-      marketing-team / content-creator) — folders exist, pages are placeholders
-- [ ] Social account OAuth connection flow (Business Owner)
-- [ ] Marketing Team → Business Owner assignment & client workspace isolation
-- [ ] Calendar, Create Post, Campaigns, Analytics, Notifications, Settings
+cp .env.local.example .env.local
 
-## Backend integration status (for final integration)
+Configure the required environment variables according to the backend
+environment.
 
-### What's actually wired to a real backend
-- **Registration, Login, admin-exists check** — calls go to real endpoints via
-  `lib/api.ts`, with every path centralized in **`lib/endpoints.ts`**. These
-  paths are educated guesses at REST convention (`/auth/login`,
-  `/auth/register`, `/users/admin-exists`) — **not yet confirmed** against
-  the real backend. Once confirmed, `lib/endpoints.ts` is the only file that
-  needs editing.
-- **LinkedIn connection** — the one real OAuth integration. Clicking Connect
-  does a full browser redirect to `${NEXT_PUBLIC_API_URL}/accounts/linkedin/connect`
-  (not a fetch call — OAuth requires the actual browser to leave the SPA).
-  The accounts page detects the `?linkedin=connected` / `?linkedin=error`
-  query param on landing back, and calls `GET /accounts/linkedin/status` to
-  refresh real connection state. See `store/useAccountsStore.ts` —
-  `refreshLinkedInStatus()` has a clearly marked guess at the response shape
-  that needs confirming.
+Do not commit private credentials, tokens, passwords, or local environment
+files to the repository.
 
-### What's still mocked (by design, not oversight)
-- Facebook, Instagram, X, YouTube, Pinterest connections — simulated
-  round-trip, no backend yet. Flip `BACKEND_WIRED.<platform>` to `true` in
-  `useAccountsStore.ts` once each one has a real endpoint — nothing else
-  needs to change.
-- Content Scheduling, Campaigns, Analytics, Publishing — all in-memory
-  zustand stores (`usePostsStore`, `useCampaignsStore`, etc.), no backend
-  yet.
-- `RequireAuth.tsx`'s dev-only role switcher — **must be removed** once real
-  login sets a real session. It's gated behind `NODE_ENV === "development"`
-  already, but the whole mock-role mechanism should come out, not just stay
-  dormant, once auth is real.
+Running the Application
 
-### Still need from the backend teammate before this is truly final
-1. Confirmed exact paths + methods for register/login/admin-exists
-   (currently guessed in `lib/endpoints.ts`)
-2. Exact request/response field names — snake_case vs camelCase — for the
-   same three endpoints
-3. Whether the JWT comes back in the response body or as an `httpOnly`
-   cookie (changes `LoginForm.tsx`'s handling)
-4. The exact role string values her `User` model uses (must match
-   `administrator` / `business_owner` / `marketing_team` / `content_creator`
-   in `lib/validation.ts`, or that file needs updating to match hers)
-5. LinkedIn endpoint paths + the exact JSON shape `/accounts/linkedin/status`
-   returns
+Start the development server:
+
+cd frontend
+npm run dev
+
+The application will normally be available at:
+
+http://localhost:3000
+Production Build
+
+To create a production build:
+
+cd frontend
+npm run build
+
+To start the production application:
+
+npm start
+Current Project Status
+
+The current implementation represents the final rebuilt SocialPilot frontend.
+
+Completed
+ Marketing landing page
+ Login
+ Registration
+ Authentication structure
+ Role-based navigation
+ Administrator workspace
+ Business Owner workspace
+ Marketing Team workspace
+ Content Creator workspace
+ Client workspace structure
+ Social account management UI
+ Content creation workflows
+ Draft management
+ Post queue
+ Publishing workflows
+ Publishing calendar
+ Campaign management
+ Analytics interfaces
+ Reporting interfaces
+ Notifications
+ Profile management
+ Settings
+ Zustand state management
+ Shared frontend architecture
+Project Rebuild
+
+The current project was rebuilt from scratch after the earlier project
+implementation was discontinued.
+
+The rebuilt implementation reorganizes the application around the final
+project requirements, with separate role-based workspaces and reusable
+frontend components.
+
+Repository Branch
+
+The final frontend implementation contributed for this branch is maintained
+on:
+
+pranjal-socialpilot
+
+This branch contains the current final SocialPilot implementation for the
+contribution.
+
+License
+
+MIT License.
+
+
+### 4. Then click **Preview**
+
+Look through it quickly. You should see proper headings, tables, bullet points, and code blocks.
+
+### 5. Click **Commit changes...**
+
+In the commit dialog, use:
+
+**Commit message:**
+
+```text
+Update README for final SocialPilot implementation
+
