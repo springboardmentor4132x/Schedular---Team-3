@@ -332,18 +332,3 @@ contribution.
 License
 
 MIT License.
-
-
-### 4. Then click **Preview**
-
-Look through it quickly. You should see proper headings, tables, bullet points, and code blocks.
-
-### 5. Click **Commit changes...**
-
-In the commit dialog, use:
-
-**Commit message:**
-
-```text
-Update README for final SocialPilot implementation
-
